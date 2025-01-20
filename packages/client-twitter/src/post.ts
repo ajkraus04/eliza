@@ -30,9 +30,9 @@ import {
 import { State } from "@elizaos/core";
 import { ActionResponse } from "@elizaos/core";
 import { generateRandomTicker } from "@jawk/utils";
-import { StockAnalyzer, getNewsByTicker, getSummarizedNews, getPriceHistoryByTicker, getFinancialSummarization, analyzeCompetitors } from "@jawk/plugin-polygon";
+import { StockAnalyzer, getNewsByTicker, getSummarizedNews, getPriceHistoryByTicker, getFinancialSummarization, analyzeCompetitors, TechnicalAnalyzer } from "@jawk/plugin-polygon";
 import { Memory } from "@elizaos/core";
-import { priceActionTemplate, newFilingTemplate, sentimentTemplate, competitiveAnalysisTemplate, twitterPostTemplate} from "./templates.ts";
+import { priceActionTemplate, newFilingTemplate, sentimentTemplate, competitiveAnalysisTemplate, twitterPostTemplate, stockAnalysisTemplate, technicalAnalysisTemplate, newsAnalysisTemplate } from "./templates.ts";
 const MAX_TIMELINES_TO_FETCH = 15;
 
 //add template import
@@ -73,6 +73,13 @@ interface PendingTweet {
     channelId: string;
     timestamp: number;
 }
+
+const TEMPLATES = [
+    newsAnalysisTemplate,
+    stockAnalysisTemplate,
+    technicalAnalysisTemplate,
+    twitterPostTemplate
+]
 
 type PendingTweetApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -162,7 +169,7 @@ export class TwitterPostClient {
             this.setupDiscordClient();
         }
 
-        this.setupEventsClient();
+        // this.setupEventsClient();
     }
 
     private setupEventsClient() {
@@ -210,7 +217,7 @@ export class TwitterPostClient {
         }
 
         const generateTweet = this.generateNewTweet.bind(this);
-        this.eventsClient.start(generateTweet);
+        //this.eventsClient.start(generateTweet);
 
         const generateNewTweetLoop = async () => {
             // Check for pending tweets first
@@ -524,13 +531,15 @@ export class TwitterPostClient {
 
 
                 const stockAnalyzer = new StockAnalyzer();
+                const technicalAnalyzer = new TechnicalAnalyzer();
 
-                const [news, priceHistory, financialData, stockAnalysis, competitiveAnalysis] = await Promise.all([
+                const [news, priceHistory, financialData, stockAnalysis, competitiveAnalysis, technicalAnalysis] = await Promise.all([
                     getSummarizedNews(randomTicker, this.runtime, {} as State),
                     getPriceHistoryByTicker(randomTicker, startDate.getTime(), endDate.getTime(), "day"),
                     getFinancialSummarization(randomTicker, this.runtime, {} as State, mockMessage, 126000),
                     stockAnalyzer.analyzeStock(randomTicker),
-                    analyzeCompetitors(randomTicker, this.runtime, {} as State, mockMessage, 126000)
+                    analyzeCompetitors(randomTicker, this.runtime, {} as State, mockMessage, 126000),
+                    technicalAnalyzer.analyzeTechnical(randomTicker)
                 ]);
 
                 elizaLogger.log("competitiveAnalysis", competitiveAnalysis);
@@ -559,8 +568,9 @@ export class TwitterPostClient {
                 state.stockAnalysis = stockAnalysis;
                 state.ticker = randomTicker;
                 state.competitiveAnalysis = competitiveAnalysis;
+                state.technicalAnalysis = JSON.stringify(technicalAnalysis);
             }
-            let template = twitterPostTemplate;
+            let template = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
 
             switch (message?.postType) {
                 case TwitterPostType.PRICE_ACTION:
@@ -599,9 +609,8 @@ export class TwitterPostClient {
 
             const context = composeContext({
                 state,
-                template:
-                    this.runtime.character.templates?.twitterPostTemplate ||
-                    template,
+                template,
+
             });
 
 

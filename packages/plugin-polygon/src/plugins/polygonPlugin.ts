@@ -2,10 +2,10 @@ import { Plugin } from "@elizaos/core";
 import { getNews } from "../actions/getNews";
 import { getPriceHistory } from "../actions/getPriceHistory";
 import { getFinancials } from "../actions/getFinancials";
-import { financialProvider } from "../providers/financeProvider";
 export { getNewsByTicker, getPriceHistoryByTicker, getCompanyFinancialsTicker, getFinancialSummarization, getSummarizedNews, analyzeCompetitors } from "../utils/polygon";
 export { StockAnalyzer } from "../utils/financialanalysis";
-
+import TechnicalAnalyzer from "../utils/technicalanalysis";
+export { TechnicalAnalyzer };
 export const polygonPlugin: Plugin = {
     name: "polygon",
     description: "Pulls data from Polygon API",

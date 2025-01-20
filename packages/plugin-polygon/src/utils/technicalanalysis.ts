@@ -150,7 +150,7 @@ const TechnicalIndicators = {
  * Main class for analyzing technical indicators
  * Processes price history to calculate technical signals
  */
-class TechnicalAnalyzer {
+export default class TechnicalAnalyzer {
     /**
      * Analyzes technical indicators for a given stock
      * @param {string} ticker - Stock symbol to analyze
@@ -453,13 +453,4 @@ class TechnicalAnalyzer {
     }
 }
 
-// Example usage
-console.log('Starting technical analysis...');
-const analyzer = new TechnicalAnalyzer();
-analyzer.analyzeTechnical('AAPL').then(analysis => {
-    console.log('Technical Analysis Results:', JSON.stringify(analysis, null, 2));
-}).catch(error => {
-    console.error('Analysis failed:', error);
-});
 
-export default TechnicalAnalyzer;
